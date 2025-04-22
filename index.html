@@ -27,7 +27,6 @@
       <ul class="nav navbar-nav">
         <li class="active"><a href="index.html">Home</a></li>
         <li><a href="trainings.html">Trainings</a></li>
-        <li><a href="favorites.html">Favorite Exercises</a></li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
@@ -41,6 +40,12 @@
 
     <!-- Sidebar esquerda com os filtros -->
     <div class="col-sm-2 sidenav text-left">
+      <div class="checkbox">
+        <label>
+          <input type="checkbox" id="favoritos"> Favorites
+        </label>
+      </div>
+
       <h4>Filer by category:</h4>
       <select id="categoria" class="form-control">
         <option value="0">All</option>

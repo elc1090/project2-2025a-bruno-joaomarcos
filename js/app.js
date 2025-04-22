@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectMusculo = document.getElementById('musculo');
   const grupoLista = document.getElementById('grupo-exercicios');
   const saveBtn = document.getElementById('save-training');
+  const chkFavoritos = document.getElementById('favoritos');
 
   // Limites
   const MAX_TRAINING = 10;
@@ -36,6 +37,47 @@ document.addEventListener("DOMContentLoaded", () => {
     lista.parentNode.appendChild(paginationContainer);
   }
 
+  // --- LocalStorage de favoritos ---
+  const STORAGE_KEY = 'wger_favorites';
+
+  function getFavorites() {
+    const fav = localStorage.getItem(STORAGE_KEY);
+    return fav ? JSON.parse(fav) : [];
+  }
+
+  function saveFavorites(arr) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  }
+
+  function isFavorite(id) {
+    return getFavorites().includes(id);
+  }
+
+  function toggleFavorite(id) {
+    let favs = getFavorites();
+    if (isFavorite(id)) {
+      favs = favs.filter(fid => fid !== id);
+    } else {
+      favs.push(id);
+    }
+    saveFavorites(favs);
+    updateFavoriteIcon(id);
+  }
+
+  function updateFavoriteIcon(id) {
+    const btn = document.querySelector(`.fav-btn[data-id="${id}"]`);
+    if (!btn) return;
+    btn.textContent = isFavorite(id) ? '★' : '☆';
+  }
+
+  function loadFavoritesUI() {
+    document.querySelectorAll('.fav-btn').forEach(btn => {
+      const id = parseInt(btn.getAttribute('data-id'));
+      btn.textContent = isFavorite(id) ? '★' : '☆';
+    });
+  }
+  // --- fim LocalStorage ---
+
   async function carregarCategorias() {
     const res = await fetch('https://wger.de/api/v2/exercisecategory/');
     const dados = await res.json();
@@ -58,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  async function carregarExercicios(categoriaId = 0, musculoId = 0) {
+  async function carregarExercicios(categoriaId = 0, musculoId = 0, somenteFavoritos = false) {
     const res = await fetch('https://wger.de/api/v2/exerciseinfo/?status=2&limit=1000');
     const dados = await res.json();
     currentFilteredExercises = dados.results.filter(ex => {
@@ -66,10 +108,22 @@ document.addEventListener("DOMContentLoaded", () => {
       let matchMusculo = true;
       if (musculoId !== 0) {
         const ids = [...(ex.muscles || []), ...(ex.muscles_secondary || [])].map(m => m.id);
-        matchMus = ids.includes(musculoId);
+        matchMusculo = ids.includes(musculoId);
       }
       return matchCategoria && matchMusculo;
     });
+
+    if (somenteFavoritos) {
+      const favs = getFavorites();
+      currentFilteredExercises = currentFilteredExercises.filter(ex => favs.includes(ex.id));
+    }
+
+    if (currentFilteredExercises.length === 0) {
+      lista.innerHTML = 'No exercises found with these filters.';
+      return;
+    }
+    
+
     currentPage = 1;
     renderPage();
     renderPagination();
@@ -94,6 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const div = document.createElement('div');
       div.className = 'exercicio';
       div.dataset.id = ex.id;
+      div.style.position = 'relative'; 
 
       let imgHTML = '';
       if (ex.images?.length) {
@@ -107,6 +162,21 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>${desc}</p>
         </div>
       `;
+
+      // botão “Favoritar”
+      const favBtn = document.createElement('button');
+      favBtn.className = 'fav-btn';
+      favBtn.setAttribute('data-id', ex.id);
+      favBtn.setAttribute('title', 'Favoritar');
+      favBtn.textContent = isFavorite(ex.id) ? '★' : '☆';
+
+      favBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleFavorite(ex.id);
+        updateFavoriteIcon(ex.id);
+      });
+
+      div.appendChild(favBtn);
 
       // botão “Info”
       const infoBtn = document.createElement('button');
@@ -132,6 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       lista.appendChild(div);
     });
+
     updateAddButtons();
   }
 
@@ -207,11 +278,22 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCounter();
   }
 
-  selectCategoria.addEventListener('change', () => carregarExercicios(+selectCategoria.value, +selectMusculo.value));
-  selectMusculo.addEventListener('change', () => carregarExercicios(+selectCategoria.value, +selectMusculo.value));
+  // dispara o reload dos exercícios com todos os filtros
+  function atualizarExercicios() {
+    const categoriaId    = parseInt(selectCategoria.value);
+    const musculoId      = parseInt(selectMusculo.value);
+    const somenteFavoritos = chkFavoritos.checked;
+    carregarExercicios(categoriaId, musculoId, somenteFavoritos)
+      .then(loadFavoritesUI);
+  }
+
+  selectCategoria.addEventListener('change', atualizarExercicios);
+  selectMusculo.addEventListener('change', atualizarExercicios);
+  chkFavoritos.addEventListener('change', atualizarExercicios);
+
 
   carregarCategorias();
   carregarMusculos();
-  carregarExercicios();
+  carregarExercicios().then(loadFavoritesUI);
   updateCounter();
 });
