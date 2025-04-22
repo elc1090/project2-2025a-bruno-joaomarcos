@@ -1,8 +1,41 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const lista           = document.getElementById('lista-exercicios');
+  const lista = document.getElementById('lista-exercicios');
   const selectCategoria = document.getElementById('categoria');
-  const selectMusculo   = document.getElementById('musculo');
-  const chkFavoritos    = document.getElementById('favoritos');
+  const selectMusculo = document.getElementById('musculo');
+  const grupoLista = document.getElementById('grupo-exercicios');
+  const saveBtn = document.getElementById('save-training');
+  const chkFavoritos = document.getElementById('favoritos');
+
+  // Limites
+  const MAX_TRAINING = 10;
+  const ITEMS_PER_PAGE = 10;
+
+  // Mapa de exercícios selecionados: id -> nome
+  let selectedExercises = new Map();
+  let currentFilteredExercises = [];
+  let currentPage = 1;
+
+  // Contador de treino
+  const trainingHeader = document.querySelector('.training-header');
+  const counterSpan = document.createElement('span');
+  counterSpan.id = 'training-counter';
+  counterSpan.textContent = `0/${MAX_TRAINING}`;
+  counterSpan.style.margin = '0 15px';
+  counterSpan.style.fontWeight = 'bold';
+  trainingHeader.insertBefore(counterSpan, saveBtn);
+
+  function updateCounter() {
+    counterSpan.textContent = `${selectedExercises.size}/${MAX_TRAINING}`;
+  }
+
+  // Container de paginação
+  let paginationContainer = document.getElementById('pagination');
+  if (!paginationContainer) {
+    paginationContainer = document.createElement('div');
+    paginationContainer.id = 'pagination';
+    paginationContainer.className = 'pagination-controls';
+    lista.parentNode.appendChild(paginationContainer);
+  }
 
   // --- LocalStorage de favoritos ---
   const STORAGE_KEY = 'wger_favorites';
@@ -67,83 +100,182 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /**
-   * Carrega e renderiza exercícios, aplicando:
-   *  - filtro de categoria
-   *  - filtro de músculo
-   *  - (opcional) filtro de favoritos
-   */
   async function carregarExercicios(categoriaId = 0, musculoId = 0, somenteFavoritos = false) {
-    const res = await fetch('https://wger.de/api/v2/exerciseinfo/?status=2&limit=60');
+    const res = await fetch('https://wger.de/api/v2/exerciseinfo/?status=2&limit=1000');
     const dados = await res.json();
-
-    lista.innerHTML = '';
-
-    let filtrados = dados.results.filter(ex => {
+    currentFilteredExercises = dados.results.filter(ex => {
       const matchCategoria = categoriaId === 0 || ex.category.id === categoriaId;
-
       let matchMusculo = true;
       if (musculoId !== 0) {
-        const musculosIds = [
-          ...(ex.muscles || []),
-          ...(ex.muscles_secondary || [])
-        ].map(m => m.id);
-        matchMusculo = musculosIds.includes(musculoId);
+        const ids = [...(ex.muscles || []), ...(ex.muscles_secondary || [])].map(m => m.id);
+        matchMusculo = ids.includes(musculoId);
       }
-
       return matchCategoria && matchMusculo;
     });
 
     if (somenteFavoritos) {
       const favs = getFavorites();
-      filtrados = filtrados.filter(ex => favs.includes(ex.id));
+      currentFilteredExercises = currentFilteredExercises.filter(ex => favs.includes(ex.id));
     }
 
-    if (filtrados.length === 0) {
-      lista.innerHTML = somenteFavoritos
-        ? 'Nenhum favorito encontrado com esses filtros.'
-        : 'No exercises found with selected filters.';
+    if (currentFilteredExercises.length === 0) {
+      lista.innerHTML = 'No exercises found with these filters.';
+      return;
+    }
+    
+
+    currentPage = 1;
+    renderPage();
+    renderPagination();
+  }
+
+  function renderPage() {
+    lista.innerHTML = '';
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    const pageItems = currentFilteredExercises.slice(start, end);
+
+    if (!pageItems.length) {
+      lista.textContent = 'No exercises found with selected filters.';
       return;
     }
 
-    filtrados.forEach(ex => {
-      const translation = ex.translations.find(t => t.language === 2) || ex.translations[0];
-      const nome      = translation?.name || 'No name available.';
-      const descricao = translation?.description?.trim() || 'No description available.';
+    pageItems.forEach(ex => {
+      const tr = ex.translations.find(t => t.language === 2) || ex.translations[0];
+      const nome = tr.name || 'No name';
+      const desc = tr.description?.trim() || 'No description';
 
       const div = document.createElement('div');
       div.className = 'exercicio';
+      div.dataset.id = ex.id;
+      div.style.position = 'relative'; 
 
-      // botão de favorito
-      const favoritoHTML = `
-        <button class="fav-btn" data-id="${ex.id}" title="Favoritar">
-          ${isFavorite(ex.id) ? '★' : '☆'}
-        </button>
-      `;
-
-      let imagensHTML = '';
+      let imgHTML = '';
       if (ex.images?.length) {
-        imagensHTML = `<img src="${ex.images[0].image}" alt="${nome}" />`;
+        imgHTML = `<img src="${ex.images[0].image}" alt="${nome}" />`;
       }
 
       div.innerHTML = `
-        <div class="exercicio-header">
-          <h3>${nome}</h3>
-          ${favoritoHTML}
+        <h3>${nome}</h3>
+        ${imgHTML}
+        <div class="desc-container" style="display:none;">
+          <p>${desc}</p>
         </div>
-        ${imagensHTML}
-        <p>${descricao}</p>
       `;
+
+      // botão “Favoritar”
+      const favBtn = document.createElement('button');
+      favBtn.className = 'fav-btn';
+      favBtn.setAttribute('data-id', ex.id);
+      favBtn.setAttribute('title', 'Favoritar');
+      favBtn.textContent = isFavorite(ex.id) ? '★' : '☆';
+
+      favBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleFavorite(ex.id);
+        updateFavoriteIcon(ex.id);
+      });
+
+      div.appendChild(favBtn);
+
+      // botão “Info”
+      const infoBtn = document.createElement('button');
+      infoBtn.textContent = 'Info';
+      infoBtn.className = 'show-info-btn';
+      infoBtn.addEventListener('click', () => {
+        const descDiv = div.querySelector('.desc-container');
+        const hidden = descDiv.style.display === 'none';
+        descDiv.style.display = hidden ? 'block' : 'none';
+        infoBtn.textContent = hidden ? 'Hide' : 'Info';
+      });
+      div.appendChild(infoBtn);
+
+      // botão “Add”
+      const addBtn = document.createElement('button');
+      addBtn.textContent = 'Add';
+      addBtn.className = 'btn add-btn';
+      addBtn.dataset.id = ex.id;
+      addBtn.addEventListener('click', () => addExercise(ex.id, nome, div));
+      div.appendChild(addBtn);
+
+      if (selectedExercises.has(ex.id)) div.classList.add('added');
+
       lista.appendChild(div);
     });
 
-    // listeners de favorito
-    lista.querySelectorAll('.fav-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = parseInt(btn.getAttribute('data-id'));
-        toggleFavorite(id);
-      });
+    updateAddButtons();
+  }
+
+  function renderPagination() {
+    paginationContainer.innerHTML = '';
+    const totalPages = Math.ceil(currentFilteredExercises.length / ITEMS_PER_PAGE);
+    if (totalPages <= 1) return;
+
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '◀';
+    prevBtn.className = 'btn btn-default btn-sm';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.addEventListener('click', () => changePage(currentPage - 1));
+
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = '▶';
+    nextBtn.className = 'btn btn-default btn-sm';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.addEventListener('click', () => changePage(currentPage + 1));
+
+    const pageIndicator = document.createElement('span');
+    pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+    pageIndicator.style.margin = '0 10px';
+
+    paginationContainer.append(prevBtn, pageIndicator, nextBtn);
+  }
+
+  function changePage(page) {
+    currentPage = page;
+    renderPage();
+    renderPagination();
+  }
+
+  function updateAddButtons() {
+    document.querySelectorAll('.add-btn').forEach(btn => {
+      const id = parseInt(btn.dataset.id);
+      btn.disabled = selectedExercises.has(id) || selectedExercises.size >= MAX_TRAINING;
     });
+  }
+
+  function addExercise(id, nome, card) {
+    if (selectedExercises.size >= MAX_TRAINING) {
+      alert(`Você só pode adicionar até ${MAX_TRAINING} exercícios.`);
+      return;
+    }
+    if (selectedExercises.has(id)) return;
+    selectedExercises.set(id, nome);
+    card.classList.add('added');
+
+    const li = document.createElement('li');
+    li.className = 'list-group-item';
+    li.dataset.id = id;
+    li.textContent = nome;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.innerHTML = '&times;';
+    removeBtn.className = 'remove-btn';
+    removeBtn.addEventListener('click', () => removeExercise(id));
+    li.appendChild(removeBtn);
+
+    grupoLista.appendChild(li);
+    updateAddButtons();
+    updateCounter();
+  }
+
+  function removeExercise(id) {
+    selectedExercises.delete(id);
+    const li = grupoLista.querySelector(`li[data-id="${id}"]`);
+    if (li) grupoLista.removeChild(li);
+    const card = lista.querySelector(`.exercicio[data-id="${id}"]`);
+    if (card) card.classList.remove('added');
+    updateAddButtons();
+    updateCounter();
   }
 
   // dispara o reload dos exercícios com todos os filtros
@@ -155,14 +287,13 @@ document.addEventListener("DOMContentLoaded", () => {
       .then(loadFavoritesUI);
   }
 
-  // listeners
   selectCategoria.addEventListener('change', atualizarExercicios);
   selectMusculo.addEventListener('change', atualizarExercicios);
   chkFavoritos.addEventListener('change', atualizarExercicios);
 
-  // inicialização
+
   carregarCategorias();
   carregarMusculos();
-  carregarExercicios()
-    .then(loadFavoritesUI);
+  carregarExercicios().then(loadFavoritesUI);
+  updateCounter();
 });
