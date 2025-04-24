@@ -6,7 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .exercicio { display: flex; justify-content: space-between; align-items: center; padding: 8px; border: 1px solid #ddd; margin-bottom: 6px; }
+    .nome-ex { flex: 1; }
+  </style>
 </head>
 <body>
   <nav class="navbar navbar-inverse">
@@ -15,7 +18,7 @@
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
-          <span class="icon-bar"></span>                        
+          <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="#">Logo</a>
       </div>
@@ -24,120 +27,234 @@
           <li><a href="index.html">Home</a></li>
           <li class="active"><a href="trainings.html">Trainings</a></li>
         </ul>
-        <ul class="nav navbar-nav navbar-right">
-          <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
-        </ul>
       </div>
     </div>
   </nav>
 
-  <div class="container">
+  <div class="container" id="main-view">
     <h1>Meus Treinos</h1>
-    <button id="delete-selected" class="btn btn-danger" disabled style="margin-bottom:15px;">
-      Excluir Selecionados
-    </button>
-    <div id="trainings-list">
-      <!-- Cada grupo será renderizado aqui -->
+    <button id="delete-selected" class="btn btn-danger" disabled style="margin-bottom:15px;">Excluir Selecionados</button>
+    <div id="trainings-list"></div>
+  </div>
+
+  <!-- Editor de Grupo -->
+  <div class="container" id="editor-view" style="display:none;">
+    <h2 id="editor-title"></h2>
+    <div class="row">
+      <div class="col-sm-3">
+        <div class="checkbox">
+          <label><input type="checkbox" id="edit-favoritos"> Favoritos</label>
+        </div>
+        <h4>Categoria</h4>
+        <select id="edit-categoria" class="form-control"></select>
+        <h4 style="margin-top:15px;">Músculo</h4>
+        <select id="edit-musculo" class="form-control"></select>
+      </div>
+      <div class="col-sm-6">
+        <div id="lista-exercicios-edit">Carregando...</div>
+        <div id="pagination-edit" style="margin-top:10px;"></div>
+      </div>
+      <div class="col-sm-3">
+        <h4>Exercícios do Grupo</h4>
+        <ul id="grupo-edit-list" class="list-group"></ul>
+        <button id="save-edit" class="btn btn-success btn-block">Salvar</button>
+        <button id="cancel-edit" class="btn btn-default btn-block">Cancelar</button>
+      </div>
     </div>
   </div>
 
-  <footer class="container-fluid text-center">
-    <p>Project WGER with filters</p>
-  </footer>
-
-  <!-- jQuery e Bootstrap JS -->
+  <!-- Scripts -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-
-  <!-- Script de listagem e exclusão de grupos -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const key = 'grupos_treino_salvos';
-      const container = document.getElementById('trainings-list');
-      const deleteSelectedBtn = document.getElementById('delete-selected');
-      let grupos = JSON.parse(localStorage.getItem(key)) || [];
+      const STORAGE_KEY = 'grupos_treino_salvos';
+      const FAVORITES_KEY = 'wger_favorites';
+      const mainView = document.getElementById('main-view');
+      const editorView = document.getElementById('editor-view');
+      const listContainer = document.getElementById('trainings-list');
+      const deleteBtn = document.getElementById('delete-selected');
+      const editorTitle = document.getElementById('editor-title');
+      const editFav = document.getElementById('edit-favoritos');
+      const editCat = document.getElementById('edit-categoria');
+      const editMus = document.getElementById('edit-musculo');
+      const listaEdit = document.getElementById('lista-exercicios-edit');
+      const pagEdit = document.getElementById('pagination-edit');
+      const grpList = document.getElementById('grupo-edit-list');
+      const saveEdit = document.getElementById('save-edit');
+      const cancelEdit = document.getElementById('cancel-edit');
 
-      // Função para renderizar todos os grupos
-      function renderGrupos() {
-        container.innerHTML = '';
+      let grupos = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      let editingGroup = null;
+      let selectedMap = new Map();
+      let exercises = [];
+      let filtered = [];
+      let page = 1;
+      const PER_PAGE = 10;
+      const MAX_TRAINING = 10;
+
+      // Helpers
+      function getFavorites() {
+        return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || [];
+      }
+      function saveGrupos() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(grupos));
+      }
+
+      // Render main list
+      function renderMain() {
+        listContainer.innerHTML = '';
         if (!grupos.length) {
-          container.textContent = 'Nenhum treino salvo.';
-          deleteSelectedBtn.disabled = true;
+          listContainer.textContent = 'Nenhum treino salvo.';
+          deleteBtn.disabled = true;
           return;
         }
-        grupos.forEach(grupo => {
+        grupos.forEach(g => {
           const panel = document.createElement('div');
           panel.className = 'panel panel-default';
-          panel.dataset.id = grupo.id;
-
-          // Cabeçalho com checkbox, nome e botão de excluir individual
-          const heading = document.createElement('div');
-          heading.className = 'panel-heading clearfix';
-          heading.innerHTML = `
-            <div class="pull-left">
-              <input type="checkbox" class="select-chk" data-id="${grupo.id}" />
-              <span style="font-size:16px; font-weight:bold; margin-left:5px;">${grupo.nome}</span>
+          panel.dataset.id = g.id;
+          panel.innerHTML = `
+            <div class="panel-heading clearfix">
+              <input type="checkbox" class="select-chk" data-id="${g.id}"> <strong>${g.nome}</strong>
+              <button class="btn btn-xs btn-primary pull-right edit-btn">Editar</button>
+              <button class="btn btn-xs btn-danger pull-right delete-btn" style="margin-right:5px;">Excluir</button>
             </div>
-            <button class="btn btn-danger btn-xs pull-right delete-btn">
-              Excluir
-            </button>
-          `;
-          panel.appendChild(heading);
+            <div class="panel-body"><ul class="list-group">
+              ${g.exercicios.map(ex => `<li class="list-group-item">${ex.nome}</li>`).join('')}
+            </ul></div>`;
+          listContainer.appendChild(panel);
+        });
+        deleteBtn.disabled = !document.querySelector('.select-chk:checked');
+      }
 
-          // Corpo com lista de exercícios
-          const body = document.createElement('div');
-          body.className = 'panel-body';
-          const ul = document.createElement('ul');
-          ul.className = 'list-group';
-          grupo.exercicios.forEach(ex => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item';
-            li.textContent = ex.nome;
-            ul.appendChild(li);
-          });
-          body.appendChild(ul);
-          panel.appendChild(body);
-          container.appendChild(panel);
+      // Load categories and muscles
+      async function carregarCategorias() {
+        editCat.innerHTML = '<option value="0">All</option>';
+        const res = await fetch('https://wger.de/api/v2/exercisecategory/');
+        const data = await res.json();
+        data.results.forEach(c => {
+          const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name;
+          editCat.appendChild(opt);
+        });
+      }
+      async function carregarMusculos() {
+        editMus.innerHTML = '<option value="0">All</option>';
+        const res = await fetch('https://wger.de/api/v2/muscle/');
+        const data = await res.json();
+        data.results.forEach(m => {
+          const opt = document.createElement('option'); opt.value = m.id; opt.textContent = m.name;
+          editMus.appendChild(opt);
         });
       }
 
-      // Atualiza estado do botão Excluir Selecionados
-      function updateDeleteSelectedBtn() {
-        const anyChecked = Array.from(document.querySelectorAll('.select-chk')).some(chk => chk.checked);
-        deleteSelectedBtn.disabled = !anyChecked;
+      // Apply filters
+      function applyFilters() {
+        const fav = editFav.checked;
+        const cat = +editCat.value;
+        const mus = +editMus.value;
+        const favs = getFavorites();
+        filtered = exercises.filter(ex => {
+          if (cat && ex.category.id !== cat) return false;
+          if (mus) {
+            const ids = [...ex.muscles.map(m => m.id), ...ex.muscles_secondary.map(m => m.id)];
+            if (!ids.includes(mus)) return false;
+          }
+          if (fav && !favs.includes(ex.id)) return false;
+          return true;
+        });
+        page = 1;
       }
 
-      // Inicializa renderização
-      renderGrupos();
+      // Render editor page
+      function renderEditor() {
+        listaEdit.innerHTML = '';
+        const start = (page - 1) * PER_PAGE;
+        filtered.slice(start, start + PER_PAGE).forEach(ex => {
+          const tr = ex.translations.find(t => t.language === 2) || ex.translations[0];
+          const nome = tr.name || 'No name';
+          const selected = selectedMap.has(ex.id);
+          const div = document.createElement('div'); div.className = 'exercicio';
+          const span = document.createElement('span'); span.className = 'nome-ex'; span.textContent = nome;
+          const btn = document.createElement('button');
+          btn.className = `btn btn-xs ${selected ? 'btn-danger btn-remove-edit' : 'btn-success btn-add-edit'}`;
+          btn.dataset.id = ex.id; btn.textContent = selected ? 'Remove' : 'Add';
+          div.appendChild(span); div.appendChild(btn);
+          listaEdit.appendChild(div);
+        });
+        renderEditorPagination();
+      }
 
-      // Delegação de evento: alteração de checkbox
-      container.addEventListener('change', e => {
-        if (e.target.classList.contains('select-chk')) {
-          updateDeleteSelectedBtn();
+      function renderEditorPagination() {
+        pagEdit.innerHTML = '';
+        const total = Math.ceil(filtered.length / PER_PAGE);
+        if (total < 2) return;
+        const prev = document.createElement('button'); prev.textContent = '◀';
+        const next = document.createElement('button'); next.textContent = '▶';
+        prev.className = next.className = 'btn btn-default btn-sm';
+        prev.disabled = page === 1; next.disabled = page === total;
+        prev.onclick = () => { page--; renderEditor(); };
+        next.onclick = () => { page++; renderEditor(); };
+        const span = document.createElement('span'); span.textContent = ` ${page}/${total} `;
+        pagEdit.append(prev, span, next);
+      }
+
+      // Update group list in editor
+      function updateGroupList() {
+        grpList.innerHTML = '';
+        selectedMap.forEach((nome, id) => {
+          const li = document.createElement('li'); li.className = 'list-group-item'; li.textContent = nome;
+          grpList.appendChild(li);
+        });
+      }
+
+      // Initialize editor for a group
+      async function initEditor(group) {
+        editingGroup = group;
+        selectedMap = new Map(group.exercicios.map(ex => [ex.id, ex.nome]));
+        editorTitle.textContent = `Editando: ${group.nome}`;
+        mainView.style.display = 'none'; editorView.style.display = '';
+        exercises = (await fetch('https://wger.de/api/v2/exerciseinfo/?status=2&limit=1000').then(r => r.json())).results;
+        await carregarCategorias(); await carregarMusculos();
+        editFav.checked = false; editCat.value = 0; editMus.value = 0;
+        applyFilters(); renderEditor(); updateGroupList();
+      }
+
+      // Event bindings
+      // Filter changes
+      [editFav, editCat, editMus].forEach(el => el.addEventListener('change', () => { applyFilters(); renderEditor(); }));
+      // Add/Remove buttons in editor
+      listaEdit.addEventListener('click', e => {
+        if (e.target.matches('.btn-add-edit')) {
+          const id = +e.target.dataset.id;
+          const nome = e.target.parentNode.querySelector('.nome-ex').textContent;
+          if (selectedMap.size < MAX_TRAINING) selectedMap.set(id, nome);
+          renderEditor(); updateGroupList();
+        } else if (e.target.matches('.btn-remove-edit')) {
+          const id = +e.target.dataset.id; selectedMap.delete(id);
+          renderEditor(); updateGroupList();
         }
       });
-
-      // Delegação de evento: exclusão individual
-      container.addEventListener('click', e => {
-        if (e.target.classList.contains('delete-btn')) {
-          const panel = e.target.closest('.panel');
-          const id = Number(panel.dataset.id);
-          grupos = grupos.filter(g => g.id !== id);
-          localStorage.setItem(key, JSON.stringify(grupos));
-          renderGrupos();
-        }
+      // Save/cancel
+      saveEdit.addEventListener('click', () => {
+        editingGroup.exercicios = Array.from(selectedMap.entries()).map(([id, nome]) => ({ id, nome }));
+        saveGrupos(); renderMain(); editorView.style.display = 'none'; mainView.style.display = '';
+      });
+      cancelEdit.addEventListener('click', () => { editorView.style.display = 'none'; mainView.style.display = ''; });
+      // Main list actions
+      listContainer.addEventListener('click', e => {
+        const panel = e.target.closest('.panel'); if (!panel) return;
+        const id = +panel.dataset.id;
+        if (e.target.matches('.edit-btn')) initEditor(grupos.find(g => g.id === id));
+        if (e.target.matches('.delete-btn')) { grupos = grupos.filter(g => g.id !== id); saveGrupos(); renderMain(); }
+      });
+      listContainer.addEventListener('change', e => { if (e.target.matches('.select-chk')) deleteBtn.disabled = !document.querySelector('.select-chk:checked'); });
+      deleteBtn.addEventListener('click', () => {
+        const ids = Array.from(document.querySelectorAll('.select-chk:checked')).map(c => +c.dataset.id);
+        if (ids.length && confirm(`Excluir ${ids.length} treino(s)?`)) { grupos = grupos.filter(g => !ids.includes(g.id)); saveGrupos(); renderMain(); }
       });
 
-      // Exclusão em massa
-      deleteSelectedBtn.addEventListener('click', () => {
-        const selectedIds = Array.from(document.querySelectorAll('.select-chk:checked'))
-                                  .map(chk => Number(chk.dataset.id));
-        if (!selectedIds.length) return;
-        if (!confirm(`Deseja excluir ${selectedIds.length} treino(s)?`)) return;
-        grupos = grupos.filter(g => !selectedIds.includes(g.id));
-        localStorage.setItem(key, JSON.stringify(grupos));
-        renderGrupos();
-      });
+      // Initial render
+      renderMain();
     });
   </script>
 </body>
