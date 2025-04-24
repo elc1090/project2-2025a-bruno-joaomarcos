@@ -278,6 +278,40 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCounter();
   }
 
+  // --- Função para salvar o grupo de treino ---
+  function salvarGrupoTreino() {
+    if (selectedExercises.size === 0) {
+      alert('Selecione pelo menos um exercício antes de salvar.');
+      return;
+    }
+  
+    const nomeGrupo = prompt('Nome do treino:');
+    if (!nomeGrupo) {
+      alert('Nome inválido.');
+      return;
+    }
+  
+    // Monta o objeto do grupo
+    const grupo = {
+      id: Date.now(), // identifica de forma única
+      nome: nomeGrupo,
+      exercicios: Array.from(selectedExercises.entries())
+                        .map(([id, nome]) => ({ id, nome }))
+    };
+  
+    // Carrega array de grupos, adiciona o novo e salva tudo
+    const key = 'grupos_treino_salvos';
+    const todos = JSON.parse(localStorage.getItem(key)) || [];
+    todos.push(grupo);
+    localStorage.setItem(key, JSON.stringify(todos));
+  
+    alert(`Treino "${nomeGrupo}" salvo com ${grupo.exercicios.length} exercícios.`);
+  }
+  
+    // conecta o botão “Save” à função
+    saveBtn.removeEventListener('click', salvarGrupoTreino);
+    saveBtn.addEventListener('click', salvarGrupoTreino);
+
   // dispara o reload dos exercícios com todos os filtros
   function atualizarExercicios() {
     const categoriaId    = parseInt(selectCategoria.value);

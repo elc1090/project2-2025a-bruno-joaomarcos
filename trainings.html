@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <title>Trainings</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
@@ -31,9 +32,12 @@
   </nav>
 
   <div class="container">
-    <h1>My Trainings</h1>
+    <h1>Meus Treinos</h1>
+    <button id="delete-selected" class="btn btn-danger" disabled style="margin-bottom:15px;">
+      Excluir Selecionados
+    </button>
     <div id="trainings-list">
-      <!-- Preenchido via JS -->
+      <!-- Cada grupo será renderizado aqui -->
     </div>
   </div>
 
@@ -41,7 +45,100 @@
     <p>Project WGER with filters</p>
   </footer>
 
+  <!-- jQuery e Bootstrap JS -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+  <!-- Script de listagem e exclusão de grupos -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const key = 'grupos_treino_salvos';
+      const container = document.getElementById('trainings-list');
+      const deleteSelectedBtn = document.getElementById('delete-selected');
+      let grupos = JSON.parse(localStorage.getItem(key)) || [];
+
+      // Função para renderizar todos os grupos
+      function renderGrupos() {
+        container.innerHTML = '';
+        if (!grupos.length) {
+          container.textContent = 'Nenhum treino salvo.';
+          deleteSelectedBtn.disabled = true;
+          return;
+        }
+        grupos.forEach(grupo => {
+          const panel = document.createElement('div');
+          panel.className = 'panel panel-default';
+          panel.dataset.id = grupo.id;
+
+          // Cabeçalho com checkbox, nome e botão de excluir individual
+          const heading = document.createElement('div');
+          heading.className = 'panel-heading clearfix';
+          heading.innerHTML = `
+            <div class="pull-left">
+              <input type="checkbox" class="select-chk" data-id="${grupo.id}" />
+              <span style="font-size:16px; font-weight:bold; margin-left:5px;">${grupo.nome}</span>
+            </div>
+            <button class="btn btn-danger btn-xs pull-right delete-btn">
+              Excluir
+            </button>
+          `;
+          panel.appendChild(heading);
+
+          // Corpo com lista de exercícios
+          const body = document.createElement('div');
+          body.className = 'panel-body';
+          const ul = document.createElement('ul');
+          ul.className = 'list-group';
+          grupo.exercicios.forEach(ex => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.textContent = ex.nome;
+            ul.appendChild(li);
+          });
+          body.appendChild(ul);
+          panel.appendChild(body);
+          container.appendChild(panel);
+        });
+      }
+
+      // Atualiza estado do botão Excluir Selecionados
+      function updateDeleteSelectedBtn() {
+        const anyChecked = Array.from(document.querySelectorAll('.select-chk')).some(chk => chk.checked);
+        deleteSelectedBtn.disabled = !anyChecked;
+      }
+
+      // Inicializa renderização
+      renderGrupos();
+
+      // Delegação de evento: alteração de checkbox
+      container.addEventListener('change', e => {
+        if (e.target.classList.contains('select-chk')) {
+          updateDeleteSelectedBtn();
+        }
+      });
+
+      // Delegação de evento: exclusão individual
+      container.addEventListener('click', e => {
+        if (e.target.classList.contains('delete-btn')) {
+          const panel = e.target.closest('.panel');
+          const id = Number(panel.dataset.id);
+          grupos = grupos.filter(g => g.id !== id);
+          localStorage.setItem(key, JSON.stringify(grupos));
+          renderGrupos();
+        }
+      });
+
+      // Exclusão em massa
+      deleteSelectedBtn.addEventListener('click', () => {
+        const selectedIds = Array.from(document.querySelectorAll('.select-chk:checked'))
+                                  .map(chk => Number(chk.dataset.id));
+        if (!selectedIds.length) return;
+        if (!confirm(`Deseja excluir ${selectedIds.length} treino(s)?`)) return;
+        grupos = grupos.filter(g => !selectedIds.includes(g.id));
+        localStorage.setItem(key, JSON.stringify(grupos));
+        renderGrupos();
+      });
+    });
+  </script>
 </body>
 </html>
