@@ -1,3 +1,20 @@
+/* Barra de pesquisa centralizada */
+.navbar-form.navbar-center {
+  float: none !important;
+  margin: 6px auto;       
+  width: 600px;           
+  display: flex;
+  align-items: center;    
+}
+
+.navbar-form.navbar-center .form-control {
+  width: 100%;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  box-shadow: none;
+}
+
 /* Grid moderno para os cards de exercício */
 #lista-exercicios {
   display: grid;
@@ -62,7 +79,6 @@
 .fav-btn:hover {
   transform: scale(1.2);
 }
-
 
 /* marco visual de exercício já adicionado */
 .exercicio.added {
@@ -132,4 +148,3 @@
 .show-info-btn:hover {
   background: #4f5458;
 }
-

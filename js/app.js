@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const grupoLista = document.getElementById('grupo-exercicios');
   const saveBtn = document.getElementById('save-training');
   const chkFavoritos = document.getElementById('favoritos');
+  const searchInput = document.getElementById('search-exercise');
 
   // Limites
   const MAX_TRAINING = 10;
@@ -14,6 +15,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedExercises = new Map();
   let currentFilteredExercises = [];
   let currentPage = 1;
+
+  // Termo de busca
+  let searchTerm = '';
 
   // Contador de treino
   const trainingHeader = document.querySelector('.training-header');
@@ -109,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (musculoId !== 0) {
         const ids = [...(ex.muscles || []), ...(ex.muscles_secondary || [])].map(m => m.id);
         matchMusculo = ids.includes(musculoId);
-      }
+      }     
       return matchCategoria && matchMusculo;
     });
 
@@ -118,12 +122,20 @@ document.addEventListener("DOMContentLoaded", () => {
       currentFilteredExercises = currentFilteredExercises.filter(ex => favs.includes(ex.id));
     }
 
+    // Aplica pesquisa por nome
+    if (searchTerm.trim() !== '') {
+      const lower = searchTerm.trim().toLowerCase();
+      currentFilteredExercises = currentFilteredExercises.filter(ex => {
+        const tr = ex.translations.find(t => t.language === 2) || ex.translations[0];
+        return tr.name?.toLowerCase().includes(lower);
+      });
+    }
+
     if (currentFilteredExercises.length === 0) {
       lista.innerHTML = 'No exercises found with these filters.';
       return;
     }
     
-
     currentPage = 1;
     renderPage();
     renderPagination();
@@ -324,6 +336,14 @@ document.addEventListener("DOMContentLoaded", () => {
   selectCategoria.addEventListener('change', atualizarExercicios);
   selectMusculo.addEventListener('change', atualizarExercicios);
   chkFavoritos.addEventListener('change', atualizarExercicios);
+
+  // Listener da barra de pesquisa
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      searchTerm = searchInput.value;
+      atualizarExercicios();
+    });
+  }
 
   carregarCategorias();
   carregarMusculos();
