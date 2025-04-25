@@ -245,7 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function addExercise(id, nome, card) {
     if (selectedExercises.size >= MAX_TRAINING) {
-      alert(`Você só pode adicionar até ${MAX_TRAINING} exercícios.`);
+      alert(`You can only add up to ${MAX_TRAINING} exercises.`);
       return;
     }
     if (selectedExercises.has(id)) return;
@@ -281,13 +281,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Função para salvar o grupo de treino ---
   function salvarGrupoTreino() {
     if (selectedExercises.size === 0) {
-      alert('Selecione pelo menos um exercício antes de salvar.');
+      alert('No exercises selected. Please select at least one exercise.');
       return;
     }
   
-    const nomeGrupo = prompt('Nome do treino:');
+    const nomeGrupo = prompt('Training name:');
     if (!nomeGrupo) {
-      alert('Nome inválido.');
+      alert('Invalid name. Please try again.');
       return;
     }
   
@@ -304,8 +304,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const todos = JSON.parse(localStorage.getItem(key)) || [];
     todos.push(grupo);
     localStorage.setItem(key, JSON.stringify(todos));
-  
-    alert(`Treino "${nomeGrupo}" salvo com ${grupo.exercicios.length} exercícios.`);
+    
+    alert(`Training "${nomeGrupo}" saved with ${grupo.exercicios.length} exercises.`);
   }
   
     // conecta o botão “Save” à função
@@ -324,7 +324,6 @@ document.addEventListener("DOMContentLoaded", () => {
   selectCategoria.addEventListener('change', atualizarExercicios);
   selectMusculo.addEventListener('change', atualizarExercicios);
   chkFavoritos.addEventListener('change', atualizarExercicios);
-
 
   carregarCategorias();
   carregarMusculos();

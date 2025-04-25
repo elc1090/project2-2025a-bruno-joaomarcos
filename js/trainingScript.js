@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderMain() {
       listContainer.innerHTML = '';
       if (!grupos.length) {
-        listContainer.textContent = 'Nenhum treino salvo.';
+        listContainer.textContent = 'No trainings found.';
         deleteBtn.disabled = true;
         return;
       }
@@ -47,8 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
         panel.innerHTML = `
           <div class="panel-heading clearfix">
             <input type="checkbox" class="select-chk" data-id="${g.id}"> <strong>${g.nome}</strong>
-            <button class="btn btn-xs btn-primary pull-right edit-btn">Editar</button>
-            <button class="btn btn-xs btn-danger pull-right delete-btn" style="margin-right:5px;">Excluir</button>
+            <button class="btn btn-xs btn-primary pull-right edit-btn">Edit</button>
+            <button class="btn btn-xs btn-danger pull-right delete-btn" style="margin-right:5px;">Delete</button>
           </div>
           <div class="panel-body"><ul class="list-group">
             ${g.exercicios.map(ex => `<li class="list-group-item">${ex.nome}</li>`).join('')}
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     listContainer.addEventListener('change', e => { if (e.target.matches('.select-chk')) deleteBtn.disabled = !document.querySelector('.select-chk:checked'); });
     deleteBtn.addEventListener('click', () => {
       const ids = Array.from(document.querySelectorAll('.select-chk:checked')).map(c => +c.dataset.id);
-      if (ids.length && confirm(`Excluir ${ids.length} treino(s)?`)) { grupos = grupos.filter(g => !ids.includes(g.id)); saveGrupos(); renderMain(); }
+      if (ids.length && confirm(`Remove ${ids.length} trainings?`)) { grupos = grupos.filter(g => !ids.includes(g.id)); saveGrupos(); renderMain(); }
     });
 
     // Initial render

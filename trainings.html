@@ -20,7 +20,9 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="#">Logo</a>
+        <a class="navbar-brand" href="index.html">
+          <img src="img/logo.png" alt="BrandLogo" style="height:40px ; margin-top:-10px; border-radius: 10px;">
+        </a>
       </div>
       <div class="collapse navbar-collapse" id="myNavbar">
         <ul class="nav navbar-nav">
@@ -32,8 +34,8 @@
   </nav>
 
   <div class="container" id="main-view">
-    <h1>Meus Treinos</h1>
-    <button id="delete-selected" class="btn btn-danger" disabled style="margin-bottom:15px;">Excluir Selecionados</button>
+    <h1>My Trainings</h1>
+    <button id="delete-selected" class="btn btn-danger" disabled style="margin-bottom:15px;">Delete Selected</button>
     <div id="trainings-list"></div>
   </div>
 
@@ -43,22 +45,22 @@
     <div class="row">
       <div class="col-sm-3">
         <div class="checkbox">
-          <label><input type="checkbox" id="edit-favoritos"> Favoritos</label>
+          <label><input type="checkbox" id="edit-favoritos">Favorites</label>
         </div>
-        <h4>Categoria</h4>
+        <h4>Category</h4>
         <select id="edit-categoria" class="form-control"></select>
-        <h4 style="margin-top:15px;">Músculo</h4>
+        <h4 style="margin-top:15px;">Muscle</h4>
         <select id="edit-musculo" class="form-control"></select>
       </div>
       <div class="col-sm-6">
-        <div id="lista-exercicios-edit">Carregando...</div>
+        <div id="lista-exercicios-edit">Loading...</div>
         <div id="pagination-edit" style="margin-top:10px;"></div>
       </div>
       <div class="col-sm-3">
-        <h4>Exercícios do Grupo</h4>
+        <h4>Training Group</h4>
         <ul id="grupo-edit-list" class="list-group"></ul>
-        <button id="save-edit" class="btn btn-success btn-block">Salvar</button>
-        <button id="cancel-edit" class="btn btn-default btn-block">Cancelar</button>
+        <button id="save-edit" class="btn btn-success btn-block">Save</button>
+        <button id="cancel-edit" class="btn btn-default btn-block">Cancel</button>
       </div>
     </div>
   </div>
