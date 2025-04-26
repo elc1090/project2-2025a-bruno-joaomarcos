@@ -10,6 +10,7 @@ Acesso: (inserir o link do deploy aqui depois)
 
 Desenvolvedores
 Bruno Perussatto — Ciência da Computação
+João Marcos Wilhelms Frigo - Sistemas de Informação
 
 Site/app original
 Link
