@@ -6,9 +6,8 @@
 
 Acesso: Substitua este texto pela URL de deploy do projeto
 
-
 ### Desenvolvedores
-Bruno Perussatto — Ciência da Computação
+Bruno Perussatto — Ciência da Computação  
 João Marcos Wilhelms Frigo - Sistemas de Informação
 
 
@@ -20,7 +19,7 @@ Este é um web app que consome a API pública do WGER para listar, filtrar e det
 - Busca em tempo real por nome de exercício no header.
 - Marcação de exercícios como favoritos (persistência em LocalStorage).
 - Construção de “grupos de treino” adicionando exercícios selecionados em painel lateral.
-- Salvamento, edição e exclusão de grupos de treino personalizados no LocalStorage.
+- Salvamento, edição e exclusão de grupos de treino personalizados no LocalStorage.  
 Durante o desenvolvimento do projeto, conseguimos aprender como consumir dados de uma API pública, interpretar e integrar essas informações na aplicação de forma dinâmica. Além disso, exploramos o uso do LocalStorage para armazenar dados de forma persistente no navegador.
 
 
@@ -59,8 +58,8 @@ Durante o desenvolvimento do projeto, conseguimos aprender como consumir dados d
 
 - WGER API: Documentação oficial da API de exercícios — https://wger.de/api-docs
 - Bootstrap (W3Schools): https://www.w3schools.com/bootstrap/tryit.asp?filename=trybs_temp_webpage&stacked=h
-- ChatGPT: Auxílio na geração de trechos de código em JavaScript e CSS.
-Prompt exemplo 1: "Como adicionar uma barra de pesquisa no header para filtrar exercícios por nome, respeitando filtros de categoria, músculo e favoritos."
+- ChatGPT: Auxílio na geração de trechos de código em JavaScript e CSS.  
+Prompt exemplo 1: "Como adicionar uma barra de pesquisa no header para filtrar exercícios por nome, respeitando filtros de categoria, músculo e favoritos."  
 Prompt exemplo 2: "Ajude a estilizar o card de exercício no styles.css para ter bordas arredondadas, sombra sutil e layout em grid responsivo."
 
 
