@@ -1,40 +1,40 @@
-TÓPICOS PARA RESOLVER AINDA:
+# Projeto: Consumindo uma API pública
 
-- melhorar a parte visual depois de pronto se sobrar tempo;
-- refatorar e dividir o app.js em mais de um arquivo para deixar mais organizado;
-- complementar o README e escolher uma logo/nome em definitivo;
 
-Projeto: Exercises WGER — Web App de Exercícios
+![Substitua a imagem ao lado por um screenshot do seu projeto](https://mdswanson.com/static/chops-ux-step-4.png "Screenshot do projeto")
 
-Acesso: (inserir o link do deploy aqui depois)
 
-Desenvolvedores
+Acesso: Substitua este texto pela URL de deploy do projeto
+
+
+### Desenvolvedores
 Bruno Perussatto — Ciência da Computação
 João Marcos Wilhelms Frigo - Sistemas de Informação
 
-Site/app original
-Link
-https://wger.de
 
-Descrição
-O WGER é uma plataforma de código aberto que disponibiliza um banco de dados de exercícios físicos, com imagens, descrições e categorização 
-por grupo muscular e equipamento. A interface padrão apresenta filtros, mas carece de uma navegação mais fluida e de funcionalidades de 
-criação de “treinos” favoritos de forma organizada.
+### Nosso produto
 
-Desenvolvimento
-Para atender às demandas, desenvolvemos um projeto leve usando JavaScript puro e Bootstrap 3. As principais customizações foram:
+Este é um web app que consome a API pública do WGER para listar, filtrar e detalhar exercícios físicos. As principais funcionalidades são:
+- Listagem paginada de exercícios com nome, imagem e descrição.
+- Filtros por categoria, grupo muscular e “somente favoritos”.
+- Busca em tempo real por nome de exercício no header.
+- Marcação de exercícios como favoritos (persistência em LocalStorage).
+- Construção de “grupos de treino” adicionando exercícios selecionados em painel lateral.
+- Salvamento, edição e exclusão de grupos de treino personalizados no LocalStorage.
+Durante o desenvolvimento do projeto, conseguimos aprender como consumir dados de uma API pública, interpretar e integrar essas informações na aplicação de forma dinâmica. Além disso, exploramos o uso do LocalStorage para armazenar dados de forma persistente no navegador.
 
-- Navbar com barra de pesquisa centralizada e filtros (categoria, músculo, favoritos).
 
-- Grid responsivo de cards de exercício, exibindo imagem, nome, descrição e botões de “favorito”, “info” e “add”.
+### Desenvolvimento
 
-- Gerenciamento de seleção: contador de exercícios adicionados, limites, marcação visual e painel lateral de “grupo de treino”.
+- Levantamento de requisitos: mapeamento dos endpoints WGER (categories, muscles, exerciseinfo) e definição das views “Exercises” e “Trainings”.
+- Implementação da interface: estrutura em HTML5 com Bootstrap 3, grade responsiva de cards e navbar com campo de busca centralizado.
+- Integração com API: uso de fetch() para obter JSON, aplicação de filtros (categoria, músculo, favoritos), busca por termo em tempo real e paginação via slice().
+- Estado e persistência: controle de exercícios selecionados com Map e arrays, armazenamento de favoritos e grupos em LocalStorage e contador visual com limite de 10 itens.
+- Polimento e testes: ajustes finais de CSS (bordas, sombras e responsividade), debug em console e validação no Chrome e Firefox.
 
-- LocalStorage para persistir favoritos e grupos de treino, permitindo edição e exclusão.
 
-- View de edição separada para modificar grupos existentes, com paginação e filtros reutilizados.
+#### Tecnologias
 
-Tecnologias
 - HTML5
 
 - CSS3 
@@ -43,7 +43,9 @@ Tecnologias
 
 - LocalStorage API
 
-Ambiente de desenvolvimento
+
+#### Ambiente de desenvolvimento
+
 - VSCode
 
 - Live Server
@@ -52,11 +54,15 @@ Ambiente de desenvolvimento
 
 - GitHub Copilot
 
-Referências e créditos
-- WGER API: Documentação oficial da API de exercícios — https://wger.de
 
-- ChatGPT: Auxílio para soluções de código e esclarecimento de dúvidas.
+#### Referências e créditos
 
-- Bootstrap 3: Framework CSS para layout e componentes.
+- WGER API: Documentação oficial da API de exercícios — https://wger.de/api-docs
+- Bootstrap (W3Schools): https://www.w3schools.com/bootstrap/tryit.asp?filename=trybs_temp_webpage&stacked=h
+- ChatGPT: Auxílio na geração de trechos de código em JavaScript e CSS.
+Prompt exemplo 1: "Como adicionar uma barra de pesquisa no header para filtrar exercícios por nome, respeitando filtros de categoria, músculo e favoritos."
+Prompt exemplo 2: "Ajude a estilizar o card de exercício no styles.css para ter bordas arredondadas, sombra sutil e layout em grid responsivo."
 
-Projeto entregue para a disciplina de Desenvolvimento de Software para a Web em 2025a.
+
+---
+Projeto entregue para a disciplina de [Desenvolvimento de Software para a Web](http://github.com/andreainfufsm/elc1090-2025a) em 2025a

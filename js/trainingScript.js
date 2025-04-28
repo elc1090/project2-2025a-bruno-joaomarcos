@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function initEditor(group) {
       editingGroup = group;
       selectedMap = new Map(group.exercicios.map(ex => [ex.id, ex.nome]));
-      editorTitle.textContent = `Editando: ${group.nome}`;
+      editorTitle.textContent = `Editing: ${group.nome}`;
       mainView.style.display = 'none'; editorView.style.display = '';
       exercises = (await fetch('https://wger.de/api/v2/exerciseinfo/?status=2&limit=1000').then(r => r.json())).results;
       await carregarCategorias(); await carregarMusculos();
