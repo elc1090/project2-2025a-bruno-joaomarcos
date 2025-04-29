@@ -4,7 +4,7 @@
 ![Substitua a imagem ao lado por um screenshot do seu projeto](img/print.png "Screenshot do projeto")
 
 
-Acesso: Substitua este texto pela URL de deploy do projeto
+Acesso: (https://elc1090.github.io/project2-2025a-bruno-joaomarcos/)
 
 ### Desenvolvedores
 Bruno Perussatto — Ciência da Computação  
